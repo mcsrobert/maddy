@@ -112,16 +112,10 @@ jobs:
       - name: "Set up Docker Buildx"
         id: buildx
         uses: docker/setup-buildx-action@v3
-      - name: "Login to Docker Hub"
-        uses: docker/login-action@v3
-        with:
-          username: ${{ secrets.DOCKERHUB_USERNAME }}
-          password: ${{ secrets.DOCKERHUB_PASSWORD }}
-          logout: false
       - name: "Login to GitHub Container Registry"
         uses: docker/login-action@v3
         with:
-          registry: "ghcr.io"
+          registry: ghcr.io
           username: ${{ github.repository_owner }}
           password: ${{ secrets.GITHUB_TOKEN }}
           logout: false # https://news.ycombinator.com/item?id=28607735
@@ -130,8 +124,7 @@ jobs:
         id: meta
         with:
           images: |
-            foxcpp/maddy
-            ghcr.io/foxcpp/maddy
+            ghcr.io/${{ github.repository_owner }}/maddy
           tags: |
             type=semver,pattern={{version}}
             type=semver,pattern={{major}}.{{minor}}
@@ -144,7 +137,7 @@ jobs:
         id: docker
         with:
           context: .
-          platforms: linux/amd64 #,linux/arm64  Temporary disabled due to SIGSEGV in gcc.
+          platforms: linux/amd64,linux/arm64
           file: Dockerfile
           push: true
           tags: ${{ steps.meta.outputs.tags }}
@@ -152,7 +145,6 @@ jobs:
       - name: "Generate container attestation"
         uses: actions/attest-build-provenance@v2
         with:
-          subject-name: ghcr.io/foxcpp/maddy
+          subject-name: ghcr.io/${{ github.repository_owner }}/maddy
           subject-digest: ${{ steps.docker.outputs.digest }}
           push-to-registry: true
-
